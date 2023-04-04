@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name">FlyBuddy</string>
     <string name="home_name">Home</string>
-    <string name="settings_name">Settings</string>
+    <string name="friends_name">Friends</string>
     <string name="search_name">Search</string>
+    <string name="settings_name">Settings</string>
 </resources>
