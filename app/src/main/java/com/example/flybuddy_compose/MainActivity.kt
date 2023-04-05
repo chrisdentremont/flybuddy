@@ -1,16 +1,13 @@
 package com.example.flybuddy_compose
-
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -19,6 +16,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,10 +27,97 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.flybuddy_compose.ui.theme.FlyBuddy_ComposeTheme
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Query
+import java.io.File
+
+var airlineList: List<String> = listOf("")
+
+data class Pagination(
+    val limit: Int,
+    val offset: Int,
+    val count: Int,
+    val total: Int
+)
+
+data class Result(
+    val airline_name: String,
+    val iata_code: String,
+    val iata_prefix_accounting: String,
+    val icao_code: String,
+    val callsign: String,
+    val type: String,
+    val status: String,
+    val fleet_size: String,
+    val fleet_average_age: String,
+    val date_founded: String,
+    val hub_code: String,
+    val country_name: String,
+    val country_iso2: String
+)
+
+data class FlightList(
+    val pagination: Pagination,
+    val data: List<Result>
+)
+
+var flightLimit: String? = null
+var flightStatus: String? = null
+var flightDate: String? = null
+var airlineName: String? = null
+var flightNumber: String? = null
+
+interface AirlineApi {
+    @GET("/v1/flights")
+    suspend fun getFlights(
+        @Query("access_key") apiKey: String?,
+        @Query("limit") limit: String?,
+        @Query("flight_status") status: String?,
+        @Query("flight_date") date: String?,
+        @Query("airline_name") airline: String?,
+        @Query("flight_number") flightNumber: String?,
+    ) : Response<FlightList>
+}
+
+object RetrofitHelper {
+    fun getInstance(): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl("http://api.aviationstack.com/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+}
+
+fun callFlightApi(): FlightList? {
+    val airlineApi = RetrofitHelper.getInstance().create(AirlineApi::class.java)
+    var result: FlightList? = null;
+
+    // launching a new coroutine
+    GlobalScope.launch {
+        result = airlineApi.getFlights(
+            "4477ae85a5e57781069e0b9969e5bf9e",
+            flightLimit,
+            flightStatus,
+            flightDate,
+            airlineName,
+            flightNumber
+        ).body()
+    }
+
+    return result
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        airlineList = File("/app/src/main/res/airlines.txt").readLines()
+
         setContent {
             FlyBuddy_ComposeTheme {
                 // A surface container using the 'background' color from the theme
@@ -140,30 +225,83 @@ fun Friends(){
     Text(text = "This is the friends page")
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun FlightSearch(){
     var text by remember {mutableStateOf("")}
+    var expanded by remember { mutableStateOf(false) }
+    var selectedAirline by remember { mutableStateOf(airlineList[0]) }
 
-    Row(
-        modifier = Modifier.padding(
-            top = 50.dp,
-            start = 20.dp,
-            end = 20.dp,
-            bottom = 20.dp
-        ).fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        OutlinedTextField(
-            value = text,
-            onValueChange = {text = it},
-            textStyle = TextStyle(
-                fontFamily = poppinsFamily,
-                fontWeight = FontWeight.Normal
-            ),
-            placeholder = {Text(text = "Search for a flight...")},
-            label = {Text(text = "Search")},
-            leadingIcon = {Icon(imageVector = Icons.Default.Search, contentDescription = "searchIcon")}
-        )
+    Column{
+        Row(
+            modifier = Modifier
+                .padding(
+                    top = 50.dp,
+                    start = 20.dp,
+                    end = 20.dp,
+                    bottom = 20.dp
+                )
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            OutlinedTextField(
+                value = text,
+                onValueChange = {text = it},
+                textStyle = TextStyle(
+                    fontFamily = poppinsFamily,
+                    fontWeight = FontWeight.Normal
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                placeholder = {Text(text = "Enter a flight number...")},
+                label = {Text(text = "Flight Number")},
+                leadingIcon = {Icon(imageVector = Icons.Default.Search, contentDescription = "searchIcon")}
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .padding(
+                    top = 0.dp,
+                    start = 20.dp,
+                    end = 20.dp,
+                    bottom = 20.dp
+                )
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ){
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = {expanded = !expanded}
+            ) {
+                TextField(
+                    value = selectedAirline,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = {Text(text = "Airline")},
+                    textStyle = TextStyle(
+                        fontFamily = poppinsFamily,
+                        fontWeight = FontWeight.Normal
+                    ),
+                    leadingIcon = {Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = "dropdownarrow")}
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    airlineList.forEach{airline ->
+                        DropdownMenuItem(
+                            content = { Text(text = airline) },
+                            onClick = {
+                                selectedAirline = airline
+                                expanded = false
+                            }
+                        )
+                    }
+                }
+
+            }
+        }
     }
 }
 
