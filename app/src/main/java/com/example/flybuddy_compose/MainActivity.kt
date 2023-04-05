@@ -4,18 +4,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -143,7 +142,29 @@ fun Friends(){
 
 @Composable
 fun FlightSearch(){
-    Text(text = "This is the flights page")
+    var text by remember {mutableStateOf("")}
+
+    Row(
+        modifier = Modifier.padding(
+            top = 50.dp,
+            start = 20.dp,
+            end = 20.dp,
+            bottom = 20.dp
+        ).fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        OutlinedTextField(
+            value = text,
+            onValueChange = {text = it},
+            textStyle = TextStyle(
+                fontFamily = poppinsFamily,
+                fontWeight = FontWeight.Normal
+            ),
+            placeholder = {Text(text = "Search for a flight...")},
+            label = {Text(text = "Search")},
+            leadingIcon = {Icon(imageVector = Icons.Default.Search, contentDescription = "searchIcon")}
+        )
+    }
 }
 
 @Composable

@@ -2,7 +2,8 @@ package com.example.flybuddy_compose.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple200 = Color(0xFFBB86FC)
-val Purple500 = Color(0xFF6200EE)
-val Purple700 = Color(0xFF3700B3)
-val Teal200 = Color(0xFF03DAC5)
+val DarkBlue = Color(0xff2a3c37)
+val LightTeal = Color(0xffb2e6d4)
+val LightBlue = Color(0xff83e8ba)
+val GrayBrown = Color(0xff504136)
+val TanGray = Color(0xffa49e8d)
