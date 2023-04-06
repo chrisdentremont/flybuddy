@@ -1,10 +1,6 @@
 package com.example.flybuddy_compose
-import android.app.DatePickerDialog
-import android.content.res.AssetManager
 import android.os.Bundle
 import android.util.Log
-import android.view.textclassifier.SelectionEvent
-import android.widget.DatePicker
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
@@ -25,10 +21,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -37,26 +30,19 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.dt.composedatepicker.CalendarType
-import com.dt.composedatepicker.ComposeCalendar
-import com.dt.composedatepicker.MonthViewType
-import com.dt.composedatepicker.SelectDateListener
-import com.example.flybuddy_compose.ui.theme.DarkBlue
 import com.example.flybuddy_compose.ui.theme.FlyBuddy_ComposeTheme
 import com.example.flybuddy_compose.ui.theme.LightBlue
 import com.kanyidev.searchable_dropdown.SearchableExpandedDropDownMenu
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
-import java.io.BufferedReader
-import java.io.File
-import java.io.InputStream
 import java.util.*
-import javax.xml.parsers.DocumentBuilderFactory
 
 var airlineList: List<String> = listOf("")
 
@@ -68,19 +54,34 @@ data class Pagination(
 )
 
 data class Result(
-    val airline_name: String,
-    val iata_code: String,
-    val iata_prefix_accounting: String,
-    val icao_code: String,
-    val callsign: String,
-    val type: String,
-    val status: String,
-    val fleet_size: String,
-    val fleet_average_age: String,
-    val date_founded: String,
-    val hub_code: String,
-    val country_name: String,
-    val country_iso2: String
+    val flight_date: String,
+    val flight_status: String,
+    val airline: Airline,
+    val flight: Flight,
+    val live: Live
+)
+
+data class Live(
+    val updated: String,
+    val latitude: Float,
+    val longitude: Float,
+    val altitude: Float,
+    val direction: Float,
+    val speed_horizontal: Float,
+    val speed_vertical: Float,
+    val is_ground: Boolean
+)
+
+data class Airline(
+    val name: String,
+    val iata: String,
+    val icao: String
+)
+
+data class Flight(
+    val number: String,
+    val iata: String,
+    val icao: String
 )
 
 data class FlightList(
@@ -90,7 +91,6 @@ data class FlightList(
 
 var numberToDisplay = 10
 var flightStatus: String? = null
-var flightDate: String? = null
 var airlineName: String? = null
 var flightNumber: String? = null
 
@@ -100,37 +100,41 @@ interface AirlineApi {
         @Query("access_key") apiKey: String?,
         @Query("limit") limit: Int?,
         @Query("flight_status") status: String?,
-        @Query("flight_date") date: String?,
         @Query("airline_name") airline: String?,
         @Query("flight_number") flightNumber: String?,
     ) : Response<FlightList>
 }
 
 object RetrofitHelper {
+    var interceptor = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
+    var client = OkHttpClient().newBuilder().addInterceptor(interceptor).build()
+
     fun getInstance(): Retrofit {
         return Retrofit.Builder()
             .baseUrl("http://api.aviationstack.com/")
             .addConverterFactory(GsonConverterFactory.create())
+            .client(client)
             .build()
     }
 }
 
-fun callFlightApi(): FlightList? {
+suspend fun callFlightApi(): FlightList? {
     val airlineApi = RetrofitHelper.getInstance().create(AirlineApi::class.java)
     var result: FlightList? = null;
 
     // launching a new coroutine
-    GlobalScope.launch {
+    val flightCall = GlobalScope.async {
         result = airlineApi.getFlights(
             "4477ae85a5e57781069e0b9969e5bf9e",
             numberToDisplay,
             flightStatus,
-            flightDate,
             airlineName,
             flightNumber
         ).body()
     }
 
+    flightCall.await()
+    Log.d("flight result", result.toString())
     return result
 }
 
@@ -267,16 +271,6 @@ fun FlightSearch(){
     calendar.time = Date()
 
 
-    val datePickerDialog = DatePickerDialog(
-        context,
-        { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
-            var correctMonth = month + 1
-            var newMonth = if (month < 9) "0$correctMonth" else correctMonth
-            var newDay = if (dayOfMonth < 10) "0$dayOfMonth" else dayOfMonth
-            flightDate = "$year-$newMonth-$newDay"
-        }, year, month, day
-    )
-
     Column{
 
         Row(
@@ -384,15 +378,11 @@ fun FlightSearch(){
             horizontalArrangement = Arrangement.SpaceEvenly
         ){
             Button(
-                onClick = {datePickerDialog.show()},
-            ){
-                Icon(imageVector = Icons.Default.CalendarToday, contentDescription = "calendarToday", modifier = Modifier.padding(end=5.dp))
-                Text(text = "Select Date")
-            }
-
-            Button(
                 onClick = {
-                          Log.d("flight search info", listOf(flightDate, flightNumber, flightStatus, airlineName).toString())
+                          Log.d("flight search info", listOf(numberToDisplay, flightNumber, flightStatus, airlineName).toString())
+                          val result = GlobalScope.async {
+                              callFlightApi()
+                          }
                 },
                 colors = ButtonDefaults.buttonColors(backgroundColor = LightBlue)
             ){
