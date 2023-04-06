@@ -5,7 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -13,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -45,6 +46,9 @@ import retrofit2.http.Query
 import java.util.*
 
 var airlineList: List<String> = listOf("")
+var flightData: List<Result>? = null
+var selectedFlights: MutableList<Result> = mutableListOf()
+
 
 data class Pagination(
     val limit: Int,
@@ -58,7 +62,16 @@ data class Result(
     val flight_status: String,
     val airline: Airline,
     val flight: Flight,
-    val live: Live
+    val live: Live,
+    val departure: DepArr,
+    val arrival: DepArr,
+)
+
+data class DepArr(
+    val airport: String,
+    val timezone: String,
+    val terminal: String,
+    val estimated: String,
 )
 
 data class Live(
@@ -134,7 +147,6 @@ suspend fun callFlightApi(): FlightList? {
     }
 
     flightCall.await()
-    Log.d("flight result", result.toString())
     return result
 }
 
@@ -238,12 +250,55 @@ val nunitoFamily = FontFamily(
 
 @Composable
 fun Home(){
-    Text(
-        modifier = Modifier.padding(24.dp),
-        fontSize = 30.sp,
-        fontFamily = poppinsFamily,
-        fontWeight = FontWeight.Normal,
-        text = "Card Content")
+    var flightListEmpty by remember { mutableStateOf(selectedFlights.isEmpty()) }
+
+    Column(
+        modifier = Modifier.verticalScroll(rememberScrollState())
+    ){
+        Text(
+            modifier = Modifier.padding(24.dp),
+            fontSize = 30.sp,
+            fontFamily = poppinsFamily,
+            fontWeight = FontWeight.Normal,
+            text = "Your Flights")
+
+        if(!flightListEmpty){
+            selectedFlights.forEach { flight ->
+                var flightNumber = flight.flight.number
+                var flightAirline = flight.airline.name
+                var flightDepAirport = flight.departure.airport.substringAfterLast("/")
+                var flightArrAirport = flight.arrival.airport.substringAfterLast("/")
+                var flightStatus = flight.flight_status.replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(
+                        Locale.getDefault()
+                    ) else it.toString()
+                }
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(15.dp),
+                    elevation = 10.dp
+                ) {
+                    Column(
+                        modifier = Modifier.padding(15.dp)
+                    ) {
+                        Text("Flight $flightNumber", fontSize = 20.sp, fontFamily = poppinsFamily, fontWeight = FontWeight.Normal)
+                        Text("Airline: $flightAirline", fontSize = 15.sp, fontFamily = nunitoFamily, fontWeight = FontWeight.Normal)
+                        Text("Departing: $flightDepAirport", fontSize = 15.sp, fontFamily = nunitoFamily, fontWeight = FontWeight.Normal)
+                        Text("Arrving: $flightArrAirport", fontSize = 15.sp, fontFamily = nunitoFamily, fontWeight = FontWeight.Normal)
+                        Text("Status: $flightStatus", fontSize = 15.sp, fontFamily = nunitoFamily, fontWeight = FontWeight.Normal)
+                    }
+                }
+            }
+        }else{
+            Text(
+                modifier = Modifier.padding(24.dp),
+                fontSize = 20.sp,
+                fontFamily = nunitoFamily,
+                fontWeight = FontWeight.Normal,
+                text = "You don't have any flights added, search for some!")
+        }
+    }
 }
 
 @Composable
@@ -251,28 +306,19 @@ fun Friends(){
     Text(text = "This is the friends page")
 }
 
+
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun FlightSearch(){
     var text by remember {mutableStateOf("")}
-    var statusExpanded by remember { mutableStateOf(false) }
+    var flightsExist by remember { mutableStateOf(false) }
 
     val statusList: List<String> = listOf("Scheduled", "Active", "Landed", "Cancelled", "Incident", "Diverted")
 
-    val context = LocalContext.current
-    val year: Int
-    val month: Int
-    val day: Int
-
-    val calendar = Calendar.getInstance()
-    year = calendar.get(Calendar.YEAR)
-    month = calendar.get(Calendar.MONTH)
-    day = calendar.get(Calendar.DAY_OF_MONTH)
-    calendar.time = Date()
-
-
-    Column{
-
+    Column(
+        modifier = Modifier
+            .fillMaxHeight()
+    ){
         Row(
             modifier = Modifier
                 .padding(
@@ -379,15 +425,78 @@ fun FlightSearch(){
         ){
             Button(
                 onClick = {
-                          Log.d("flight search info", listOf(numberToDisplay, flightNumber, flightStatus, airlineName).toString())
                           val result = GlobalScope.async {
-                              callFlightApi()
+                              flightsExist = false
+                              val flightList = callFlightApi()
+                              if (flightList != null) {
+                                  flightData = flightList.data
+                                  flightsExist = true
+                              }
                           }
                 },
                 colors = ButtonDefaults.buttonColors(backgroundColor = LightBlue)
             ){
                 Icon(imageVector = Icons.Default.Search, contentDescription = "searchIcon", modifier = Modifier.padding(end=5.dp))
                 Text(text = "Search")
+            }
+        }
+        Row(
+            modifier = Modifier
+                .padding(
+                    top = 10.dp,
+                    start = 20.dp,
+                    end = 20.dp,
+                    bottom = 20.dp
+                )
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ){
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ){
+                if(flightsExist){
+                    flightData?.forEach { flight ->
+                        var flightNumber = flight.flight.number
+                        var flightAirline = flight.airline.name
+                        var flightDepAirport = flight.departure.airport.substringAfterLast("/")
+                        var flightArrAirport = flight.arrival.airport.substringAfterLast("/")
+                        var flightStatus = flight.flight_status.replaceFirstChar {
+                            if (it.isLowerCase()) it.titlecase(
+                                Locale.getDefault()
+                            ) else it.toString()
+                        }
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(15.dp),
+                            elevation = 10.dp
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(15.dp)
+                            ) {
+                                Text("Flight $flightNumber", fontSize = 20.sp, fontFamily = poppinsFamily, fontWeight = FontWeight.Normal)
+                                Text("Airline: $flightAirline", fontSize = 15.sp, fontFamily = nunitoFamily, fontWeight = FontWeight.Normal)
+                                Text("Departing: $flightDepAirport", fontSize = 15.sp, fontFamily = nunitoFamily, fontWeight = FontWeight.Normal)
+                                Text("Arrving: $flightArrAirport", fontSize = 15.sp, fontFamily = nunitoFamily, fontWeight = FontWeight.Normal)
+                                Text("Status: $flightStatus", fontSize = 15.sp, fontFamily = nunitoFamily, fontWeight = FontWeight.Normal)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ){
+                                    Button(
+                                        onClick = {
+                                            selectedFlights.add(flight)
+                                            Log.d("flight list", selectedFlights.toString())
+                                        },
+                                    ){
+                                        Icon(imageVector = Icons.Default.Add, contentDescription = "hdrPlus", modifier = Modifier.padding(end=5.dp))
+                                        Text(text = "Add Flight")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
