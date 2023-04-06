@@ -1,7 +1,10 @@
 package com.example.flybuddy_compose
+import android.app.DatePickerDialog
 import android.content.res.AssetManager
 import android.os.Bundle
 import android.util.Log
+import android.view.textclassifier.SelectionEvent
+import android.widget.DatePicker
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
@@ -13,6 +16,8 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -20,7 +25,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -29,7 +37,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.dt.composedatepicker.CalendarType
+import com.dt.composedatepicker.ComposeCalendar
+import com.dt.composedatepicker.MonthViewType
+import com.dt.composedatepicker.SelectDateListener
+import com.example.flybuddy_compose.ui.theme.DarkBlue
 import com.example.flybuddy_compose.ui.theme.FlyBuddy_ComposeTheme
+import com.example.flybuddy_compose.ui.theme.LightBlue
 import com.kanyidev.searchable_dropdown.SearchableExpandedDropDownMenu
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -41,6 +55,7 @@ import retrofit2.http.Query
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStream
+import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
 
 var airlineList: List<String> = listOf("")
@@ -73,7 +88,7 @@ data class FlightList(
     val data: List<Result>
 )
 
-var flightLimit: String? = null
+var numberToDisplay = 10
 var flightStatus: String? = null
 var flightDate: String? = null
 var airlineName: String? = null
@@ -83,7 +98,7 @@ interface AirlineApi {
     @GET("/v1/flights")
     suspend fun getFlights(
         @Query("access_key") apiKey: String?,
-        @Query("limit") limit: String?,
+        @Query("limit") limit: Int?,
         @Query("flight_status") status: String?,
         @Query("flight_date") date: String?,
         @Query("airline_name") airline: String?,
@@ -108,7 +123,7 @@ fun callFlightApi(): FlightList? {
     GlobalScope.launch {
         result = airlineApi.getFlights(
             "4477ae85a5e57781069e0b9969e5bf9e",
-            flightLimit,
+            numberToDisplay,
             flightStatus,
             flightDate,
             airlineName,
@@ -236,10 +251,34 @@ fun Friends(){
 @Composable
 fun FlightSearch(){
     var text by remember {mutableStateOf("")}
-    var expanded by remember { mutableStateOf(false) }
-    var selectedAirline by remember { mutableStateOf(airlineList[0]) }
+    var statusExpanded by remember { mutableStateOf(false) }
+
+    val statusList: List<String> = listOf("Scheduled", "Active", "Landed", "Cancelled", "Incident", "Diverted")
+
+    val context = LocalContext.current
+    val year: Int
+    val month: Int
+    val day: Int
+
+    val calendar = Calendar.getInstance()
+    year = calendar.get(Calendar.YEAR)
+    month = calendar.get(Calendar.MONTH)
+    day = calendar.get(Calendar.DAY_OF_MONTH)
+    calendar.time = Date()
+
+
+    val datePickerDialog = DatePickerDialog(
+        context,
+        { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
+            var correctMonth = month + 1
+            var newMonth = if (month < 9) "0$correctMonth" else correctMonth
+            var newDay = if (dayOfMonth < 10) "0$dayOfMonth" else dayOfMonth
+            flightDate = "$year-$newMonth-$newDay"
+        }, year, month, day
+    )
 
     Column{
+
         Row(
             modifier = Modifier
                 .padding(
@@ -248,23 +287,11 @@ fun FlightSearch(){
                     end = 20.dp,
                     bottom = 20.dp
                 )
-                .fillMaxWidth(),
+                .width(400.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
-        ) {
-            OutlinedTextField(
-                modifier = Modifier.width(300.dp),
-                value = text,
-                onValueChange = {text = it},
-                textStyle = TextStyle(
-                    fontFamily = poppinsFamily,
-                    fontWeight = FontWeight.Normal
-                ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                placeholder = {Text(text = "Enter a flight number...")},
-                label = {Text(text = "Flight Number")},
-                leadingIcon = {Icon(imageVector = Icons.Default.Search, contentDescription = "searchIcon")}
-            )
+        ){
+            Text("Search for a flight", fontSize = 30.sp, fontFamily = poppinsFamily, fontWeight = FontWeight.Normal)
         }
 
         Row(
@@ -275,16 +302,40 @@ fun FlightSearch(){
                     end = 20.dp,
                     bottom = 20.dp
                 )
-                .fillMaxWidth(),
+                .width(400.dp),
             horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ){
             SearchableExpandedDropDownMenu(
                 listOfItems = airlineList,
-                modifier = Modifier.width(300.dp),
                 onDropDownItemSelected = { item ->
                     airlineName = item
                 },
-                placeholder = "Select airline",
+                placeholder = "Airline",
+                openedIcon = Icons.Default.ArrowForward,
+                closedIcon = Icons.Default.ArrowDropDown,
+                parentTextFieldCornerRadius = 0.dp
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .padding(
+                    top = 0.dp,
+                    start = 20.dp,
+                    end = 20.dp,
+                    bottom = 10.dp
+                )
+                .width(400.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ){
+            SearchableExpandedDropDownMenu(
+                listOfItems = statusList,
+                onDropDownItemSelected = { item ->
+                    flightStatus = item.lowercase()
+                },
+                placeholder = "Status",
                 openedIcon = Icons.Default.ArrowForward,
                 closedIcon = Icons.Default.ArrowDropDown,
                 parentTextFieldCornerRadius = 0.dp
@@ -299,12 +350,53 @@ fun FlightSearch(){
                     end = 20.dp,
                     bottom = 20.dp
                 )
-                .fillMaxWidth(),
+                .width(400.dp),
             horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = text,
+                onValueChange = {
+                    text = it
+                    flightNumber = it
+                },
+                textStyle = TextStyle(
+                    fontFamily = poppinsFamily,
+                    fontWeight = FontWeight.Normal
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                placeholder = {Text(text = "Enter a flight number...", style = TextStyle(color = Color.Gray))},
+                label = {Text(text = "Flight #")},
+            )
+
+
+        }
+
+        Row(
+            modifier = Modifier
+                .padding(
+                    top = 0.dp,
+                    start = 20.dp,
+                    end = 20.dp,
+                    bottom = 20.dp
+                )
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
         ){
             Button(
-                onClick = {},
+                onClick = {datePickerDialog.show()},
             ){
+                Icon(imageVector = Icons.Default.CalendarToday, contentDescription = "calendarToday", modifier = Modifier.padding(end=5.dp))
+                Text(text = "Select Date")
+            }
+
+            Button(
+                onClick = {
+                          Log.d("flight search info", listOf(flightDate, flightNumber, flightStatus, airlineName).toString())
+                },
+                colors = ButtonDefaults.buttonColors(backgroundColor = LightBlue)
+            ){
+                Icon(imageVector = Icons.Default.Search, contentDescription = "searchIcon", modifier = Modifier.padding(end=5.dp))
                 Text(text = "Search")
             }
         }
