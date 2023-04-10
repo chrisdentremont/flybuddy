@@ -304,5 +304,102 @@ fun FlightSearch(){
 
 @Composable
 fun Settings(){
-    Text(text = "This is the settings page")
+    var requestsFromAnyone by remember { mutableStateOf(false) }
+    var visibleFlights by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxHeight()
+            .fillMaxWidth()
+            .padding(all = 20.dp)
+    ){
+        Text(
+            text = "Settings",
+            fontSize = 30.sp,
+            fontFamily = poppinsFamily,
+            fontWeight = FontWeight.Normal,
+            modifier = Modifier.padding(bottom = 20.dp)
+        )
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 10.dp)
+        ){
+            Column(){
+                Text(
+                    text = "Allow requests from anyone",
+                    fontSize = 18.sp,
+                    fontFamily = poppinsFamily,
+                    fontWeight = FontWeight.Normal,
+                )
+                Text(
+                    text = "Anyone will be able to send you a friend request.",
+                    fontSize = 12.sp,
+                    fontFamily = nunitoFamily,
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier.widthIn(0.dp, 300.dp)
+                )
+            }
+            Switch(checked = requestsFromAnyone, onCheckedChange = {requestsFromAnyone = it})
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 30.dp)
+        ){
+            Column(){
+                Text(
+                    text = "Flight visibility",
+                    fontSize = 18.sp,
+                    fontFamily = poppinsFamily,
+                    fontWeight = FontWeight.Normal,
+                )
+                Text(
+                    text = "Anyone can see your flights if checked, otherwise only friends can see them.",
+                    fontSize = 12.sp,
+                    fontFamily = nunitoFamily,
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier.widthIn(0.dp, 300.dp)
+                )
+            }
+            Switch(checked = visibleFlights, onCheckedChange = {visibleFlights = it})
+        }
+
+        Divider(modifier = Modifier.padding(bottom = 30.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 10.dp)
+        ){
+            Button(
+                onClick = {},
+                modifier = Modifier.padding(end = 10.dp)
+            ){
+                Text(text = "Change Email")
+            }
+            Button(
+                onClick = {}
+            ){
+                Text(text = "Change Password")
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 10.dp)
+        ){
+            Button(
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red),
+                onClick = {}
+            ){
+                Text(text = "Delete Account", color = Color.White)
+            }
+        }
+    }
 }
