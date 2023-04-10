@@ -1,13 +1,14 @@
 package com.example.flybuddy_compose
+import android.media.Image
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,14 +16,17 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.modifier.modifierLocalConsumer
+import androidx.compose.ui.platform.textInputServiceFactory
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role.Companion.Image
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +37,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import coil.compose.rememberAsyncImagePainter
 import com.example.flybuddy_compose.ui.theme.FlyBuddy_ComposeTheme
 import com.example.flybuddy_compose.ui.theme.LightBlue
 import com.kanyidev.searchable_dropdown.SearchableExpandedDropDownMenu
@@ -279,7 +284,278 @@ fun Home(){
 
 @Composable
 fun Friends(){
-    Text(text = "This is the friends page")
+    Column(
+        modifier = Modifier
+            .fillMaxHeight()
+            .fillMaxWidth()
+            .padding(all = 20.dp)
+            .verticalScroll(rememberScrollState())
+    ){
+        Text(
+            text = "Friends",
+            fontSize = 30.sp,
+            fontFamily = poppinsFamily,
+            fontWeight = FontWeight.Normal,
+            modifier = Modifier.padding(bottom = 20.dp),
+        )
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 10.dp)
+        ){
+            Column(){
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(15.dp),
+                    elevation = 10.dp,
+                ){
+                    Column(
+                        modifier = Modifier.padding(5.dp)
+                    ){
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(5.dp)
+                        ) {
+                            Image(
+                                painter = rememberAsyncImagePainter("https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/f19a8dbd-b9e4-4ce8-9726-5a1412453ce7/dabkw0g-5004586b-8f46-40df-ae0e-9baef2aa6929.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcL2YxOWE4ZGJkLWI5ZTQtNGNlOC05NzI2LTVhMTQxMjQ1M2NlN1wvZGFia3cwZy01MDA0NTg2Yi04ZjQ2LTQwZGYtYWUwZS05YmFlZjJhYTY5MjkucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.22JifnHYgz5tBl9jIweAjmPxLjujBdDl-rVYBjR1p14"),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(75.dp)
+                                    .clip(CircleShape)
+                                    .border(5.dp, Color.White, CircleShape)
+                            )
+                            Text(
+                                "Chris D'Entremont",
+                                fontSize = 20.sp,
+                                fontFamily = poppinsFamily,
+                                fontWeight = FontWeight.Normal,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(start = 10.dp)
+                            )
+                            Button(
+                                onClick = { /*TODO*/ },
+                                modifier = Modifier
+                                    .padding(start = 10.dp)
+                                    .size(width = 50.dp, height = 50.dp)
+                            ) {
+                                Icon(imageVector = Icons.Filled.Delete, contentDescription = "delete")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 10.dp)
+        ){
+            Column(){
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(15.dp),
+                    elevation = 10.dp,
+                ){
+                    Column(
+                        modifier = Modifier.padding(5.dp)
+                    ){
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(5.dp)
+                        ) {
+                            Image(
+                                painter = rememberAsyncImagePainter("https://pm1.narvii.com/6345/ed3b88240fbbf8b1b89a2d29980a19d6f8834b1a_hq.jpg"),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(75.dp)
+                                    .clip(CircleShape)
+                                    .border(5.dp, Color.White, CircleShape)
+                            )
+                            Text(
+                                "Gabriel Madeira",
+                                fontSize = 20.sp,
+                                fontFamily = poppinsFamily,
+                                fontWeight = FontWeight.Normal,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(start = 10.dp)
+                            )
+                            Button(
+                                onClick = { /*TODO*/ },
+                                modifier = Modifier
+                                    .padding(start = 10.dp)
+                                    .size(width = 50.dp, height = 50.dp)
+                            ) {
+                                Icon(imageVector = Icons.Filled.Delete, contentDescription = "delete")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 10.dp)
+        ){
+            Column(){
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(15.dp),
+                    elevation = 10.dp,
+                ){
+                    Column(
+                        modifier = Modifier.padding(5.dp)
+                    ){
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(5.dp)
+                        ) {
+                            Image(
+                                painter = rememberAsyncImagePainter("https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/f19a8dbd-b9e4-4ce8-9726-5a1412453ce7/dabldy4-9446bc17-de1f-4429-bb33-8f2762c8e7ac.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcL2YxOWE4ZGJkLWI5ZTQtNGNlOC05NzI2LTVhMTQxMjQ1M2NlN1wvZGFibGR5NC05NDQ2YmMxNy1kZTFmLTQ0MjktYmIzMy04ZjI3NjJjOGU3YWMucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.wbNGcuCGuxmYCndImvx3gyEb4FZ9dE0Mv8IlBhzEy-4"),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(75.dp)
+                                    .clip(CircleShape)
+                                    .border(5.dp, Color.White, CircleShape)
+                            )
+                            Text(
+                                "Mo Merchant",
+                                fontSize = 20.sp,
+                                fontFamily = poppinsFamily,
+                                fontWeight = FontWeight.Normal,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(start = 10.dp)
+                            )
+                            Button(
+                                onClick = { /*TODO*/ },
+                                modifier = Modifier
+                                    .padding(start = 10.dp)
+                                    .size(width = 50.dp, height = 50.dp)
+                            ) {
+                                Icon(imageVector = Icons.Filled.Delete, contentDescription = "delete")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 10.dp)
+        ){
+            Column(){
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(15.dp),
+                    elevation = 10.dp,
+                ){
+                    Column(
+                        modifier = Modifier.padding(5.dp)
+                    ){
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(5.dp)
+                        ) {
+                            Image(
+                                painter = rememberAsyncImagePainter("https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/f19a8dbd-b9e4-4ce8-9726-5a1412453ce7/dabheg6-f7233d4d-8ef7-4611-bed8-b65ad9b93060.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7InBhdGgiOiJcL2ZcL2YxOWE4ZGJkLWI5ZTQtNGNlOC05NzI2LTVhMTQxMjQ1M2NlN1wvZGFiaGVnNi1mNzIzM2Q0ZC04ZWY3LTQ2MTEtYmVkOC1iNjVhZDliOTMwNjAucG5nIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmZpbGUuZG93bmxvYWQiXX0.D_drECvO2Lur5t0MrGn5HpHHWSwaTmr5Ik_kbu9pmqY"),
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(75.dp)
+                                    .clip(CircleShape)
+                                    .border(5.dp, Color.White, CircleShape)
+                            )
+                            Text(
+                                "Ayla Hebert",
+                                fontSize = 20.sp,
+                                fontFamily = poppinsFamily,
+                                fontWeight = FontWeight.Normal,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(start = 10.dp)
+                            )
+                            Button(
+                                onClick = { /*TODO*/ },
+                                modifier = Modifier
+                                    .padding(start = 10.dp)
+                                    .size(width = 50.dp, height = 50.dp)
+                            ) {
+                                Icon(imageVector = Icons.Filled.Delete, contentDescription = "delete")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Row(horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 10.dp)){
+            Column() {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(15.dp),
+                    elevation = 10.dp,
+                ){
+                    Column(
+                        modifier = Modifier.padding(5.dp)
+                    ){
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(5.dp)
+                        ) {
+                            Button(
+                                onClick = { /*TODO*/ },
+                                modifier = Modifier
+                                    .padding(start = 10.dp)
+                                    .fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = "Add a new friend", fontSize = 20.sp,
+                                    fontFamily = poppinsFamily,
+                                    fontWeight = FontWeight.Normal,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(start = 10.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 
