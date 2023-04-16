@@ -1,13 +1,11 @@
 package com.example.flybuddy_compose
 
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Modifier
@@ -15,9 +13,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.selects.select
 import java.util.*
 
+/**
+ * The composable function for displaying flights on the home page.
+ * Each flight from the saved flights list is displayed as a card
+ * where the user can click to open a menu that displays information
+ * about the flight.
+ */
 @Composable
 fun HomeCards(){
     val context = LocalContext.current

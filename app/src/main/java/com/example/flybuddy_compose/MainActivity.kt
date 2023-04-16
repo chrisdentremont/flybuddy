@@ -1,14 +1,11 @@
 package com.example.flybuddy_compose
-import android.media.Image
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.StringRes
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -19,18 +16,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.modifier.modifierLocalConsumer
-import androidx.compose.ui.platform.textInputServiceFactory
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role.Companion.Image
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.*
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.ViewModelFactoryDsl
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -39,8 +29,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.flybuddy_compose.ui.theme.FlyBuddy_ComposeTheme
-import com.example.flybuddy_compose.ui.theme.LightBlue
-import com.kanyidev.searchable_dropdown.SearchableExpandedDropDownMenu
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import okhttp3.OkHttpClient
@@ -52,13 +40,33 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 import java.util.*
 
+/**
+ * Used to store the name of every major airline
+ * so that the user can filter from the list.
+ */
 var airlineList: List<String> = listOf("")
+
+/**
+ * Used to store the currently selected flight
+ * on the home page so that the correct
+ * information can be displayed.
+ */
 var flightData: List<Result>? = null
 
+/**
+ * An object to store flights that are currently saved by the
+ * user. Persists across different tabs so that the saved flights
+ * can be displayed on the home tab.
+ */
 object SelectedFlights{
     val list: SnapshotStateList<Result> = mutableStateListOf()
 }
 
+/**
+ * A class to store pagination information from the API request.
+ * Holds context info about retrieved flights such as flights
+ * returned and the requested limit.
+ */
 data class Pagination(
     val limit: Int,
     val offset: Int,
@@ -66,6 +74,10 @@ data class Pagination(
     val total: Int
 )
 
+/**
+ * A class to store all information held in a returned flight
+ * object. Has sub-classes that store the included fields.
+ */
 data class Result(
     val flight_date: String,
     val flight_status: String,
@@ -76,6 +88,10 @@ data class Result(
     val arrival: DepArr,
 )
 
+/**
+ * A sub-class that stores flight information regarding arrivals
+ * and departures such as timezone and airport information.
+ */
 data class DepArr(
     val airport: String,
     val timezone: String,
@@ -83,6 +99,11 @@ data class DepArr(
     val estimated: String,
 )
 
+/**
+ * A sub-class that stores information regarding a flight's
+ * current position that includes latitude and longitude
+ * and more.
+ */
 data class Live(
     val updated: String,
     val latitude: Float,
@@ -94,18 +115,31 @@ data class Live(
     val is_ground: Boolean
 )
 
+/**
+ * A sub-class that contains information about the airline
+ * linked to a specific flight.
+ */
 data class Airline(
     val name: String,
     val iata: String,
     val icao: String
 )
 
+/**
+ * A sub-class that contains information about a flight's
+ * identification.
+ */
 data class Flight(
     val number: String,
     val iata: String,
     val icao: String
 )
 
+/**
+ * The main class that is returned from the flight API request.
+ * Contains the pagination class that contains context information,
+ * and the data class that contains the actual flight information.
+ */
 data class FlightList(
     val pagination: Pagination,
     val data: List<Result>
@@ -116,6 +150,11 @@ var flightStatus: String? = null
 var airlineName: String? = null
 var flightNumber: String? = null
 
+/**
+ * The interface used to make requests to the aviationstack API.
+ * Accepts optional queries such as an airline name or flight number
+ * that can be used to filter requested flights.
+ */
 interface AirlineApi {
     @GET("/v1/flights")
     suspend fun getFlights(
@@ -127,6 +166,10 @@ interface AirlineApi {
     ) : Response<FlightList>
 }
 
+/**
+ * A Retrofit helper object that is used to make an API request with
+ * a given request link and other information.
+ */
 object RetrofitHelper {
     var interceptor = HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)
     var client = OkHttpClient().newBuilder().addInterceptor(interceptor).build()
@@ -140,6 +183,11 @@ object RetrofitHelper {
     }
 }
 
+/**
+ * The method that is called directly from the application. This method
+ * collects any user-entered query and interacts with the Retrofit
+ * helper object to make a request to the aviationstack API.
+ */
 suspend fun callFlightApi(): FlightList? {
     val airlineApi = RetrofitHelper.getInstance().create(AirlineApi::class.java)
     var result: FlightList? = null;
@@ -159,6 +207,10 @@ suspend fun callFlightApi(): FlightList? {
     return result
 }
 
+/**
+ * The initialization class of the application. The tabs are created,
+ * and the list of airlines is read from an existing file.
+ */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -180,6 +232,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * The class that contains information about every existing page
+ * within the application.
+ */
 sealed class Screen(val route: String, @StringRes val resourceId: Int) {
     object Home : Screen("home", R.string.home_name)
     object Search : Screen("flightSearch", R.string.search_name)
@@ -188,7 +244,10 @@ sealed class Screen(val route: String, @StringRes val resourceId: Int) {
 }
 
 
-@Preview(showBackground = true)
+/**
+ * The composable function that represents the tabs at the bottom
+ * of the screen and provides functionality to them.
+ */
 @Composable
 fun NavBar(){
     val routeMap = mapOf(
@@ -243,6 +302,9 @@ fun NavBar(){
 
 }
 
+/**
+ * Font families that are used within the application.
+ */
 val poppinsFamily = FontFamily(
     Font(R.font.poppins_regular, FontWeight.Normal),
     Font(R.font.poppins_bold, FontWeight.Bold),
@@ -257,6 +319,10 @@ val nunitoFamily = FontFamily(
     Font(R.font.nunito_light, FontWeight.Light)
 )
 
+/**
+ * The composable function that represents the home page. Handles displaying
+ * the selected flight list.
+ */
 @Composable
 fun Home(){
     Column(
@@ -282,6 +348,11 @@ fun Home(){
     }
 }
 
+/**
+ * The composable function for displaying the friends page. Currently a
+ * mockup of what the friends page would actually look like if
+ * properly implemented.
+ */
 @Composable
 fun Friends(){
     Column(
@@ -558,7 +629,11 @@ fun Friends(){
     }
 }
 
-
+/**
+ * The composable function for displaying the flight search page.
+ * Handles input from the user regarding search filtering, and
+ * makes the API request when the user submits their information.
+ */
 @Composable
 fun FlightSearch(){
     Column(
@@ -578,6 +653,11 @@ fun FlightSearch(){
     }
 }
 
+/**
+ * The composable function for displaying the settings page. Currently
+ * a mockup of what the settings page would actually look like if
+ * properly implemented.
+ */
 @Composable
 fun Settings(){
     var requestsFromAnyone by remember { mutableStateOf(false) }

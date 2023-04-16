@@ -1,9 +1,6 @@
 package com.example.flybuddy_compose
 
-import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -21,13 +18,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.example.flybuddy_compose.ui.theme.LightBlue
 import com.kanyidev.searchable_dropdown.SearchableExpandedDropDownMenu
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import java.util.*
 
+/**
+ * Displays the header text.
+ */
 @Composable
 fun SearchHeader(){
     Row(
@@ -46,6 +45,10 @@ fun SearchHeader(){
     }
 }
 
+/**
+ * Displays the airline filter where the user can select an airline
+ * to search flights by.
+ */
 @Composable
 fun AirlineSearch(){
     Row(
@@ -73,6 +76,10 @@ fun AirlineSearch(){
     }
 }
 
+/**
+ * Displays the status filter where the user can choose
+ * a flight status to search by.
+ */
 @Composable
 fun StatusSearch(){
     val statusList: List<String> = listOf("Scheduled", "Active", "Landed", "Cancelled", "Incident", "Diverted")
@@ -102,6 +109,10 @@ fun StatusSearch(){
     }
 }
 
+/**
+ * Displays the flight number filter where the user can enter
+ * a flight identification number to search by.
+ */
 @Composable
 fun NumberSearch(){
     var text by remember { mutableStateOf("") }
@@ -136,6 +147,11 @@ fun NumberSearch(){
     }
 }
 
+/**
+ * The composable function for displaying the flights returned from
+ * the aviationstack API. Each returned flight is displayed
+ * as a card where certain information is displayed.
+ */
 @Composable
 fun FlightResults(){
     val context = LocalContext.current
